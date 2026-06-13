@@ -6,108 +6,77 @@
   <title>Yonyou Cloud</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body {
-      margin: 0; padding: 40px; font-family: 'Segoe UI', sans-serif;
-      text-align: center; background: linear-gradient(135deg, #f5f5f5 0%, #e8e8e8 100%);
-      min-height: 100vh;
+    html, body { width: 100%; height: 100%; overflow: hidden; background: #fff; }
+    #loading {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      background: linear-gradient(135deg, #f8f9fa, #e9ecef); font-family: "Segoe UI", sans-serif;
+      z-index: 10; transition: opacity 0.5s ease;
     }
-    .card {
-      background: #fff; border-radius: 16px; padding: 48px 32px;
-      max-width: 440px; margin: 0 auto;
-      box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+    #loading.fade-out { opacity: 0; pointer-events: none; }
+    .spinner {
+      width: 44px; height: 44px; border: 4px solid #dee2e6;
+      border-top-color: #E8450F; border-radius: 50%;
+      animation: spin 0.8s linear infinite; margin-bottom: 20px;
     }
-    .icon { font-size: 56px; margin-bottom: 20px; }
-    h1 { color: #222; font-size: 24px; margin-bottom: 8px; font-weight: 700; }
-    .sub { color: #888; font-size: 14px; margin-bottom: 32px; line-height: 1.6; }
-    .btn {
-      display: block; width: 100%; padding: 16px 28px;
-      background: linear-gradient(135deg, #E8450F, #ff6b35);
-      color: #fff; text-decoration: none; border-radius: 10px;
-      font-size: 17px; font-weight: 600; cursor: pointer;
-      border: none; transition: transform 0.15s, box-shadow 0.15s;
-      box-shadow: 0 4px 12px rgba(232,69,15,0.3);
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading-text { color: #495057; font-size: 15px; font-weight: 500; }
+    .loading-sub { color: #868e96; font-size: 12px; margin-top: 6px; }
+    iframe {
+      width: 100%; height: 100%; border: none;
+      position: absolute; top: 0; left: 0;
     }
-    .btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(232,69,15,0.4); }
-    .btn:active { transform: translateY(0); }
-    .link-row { margin-top: 20px; }
-    .link-row a {
-      color: #E8450F; font-size: 13px; text-decoration: none;
-      border-bottom: 1px dashed #E8450F;
-    }
-    .link-row a:hover { border-bottom-style: solid; }
-    .footer { margin-top: 32px; color: #bbb; font-size: 11px; }
   </style>
 </head>
 <body>
-  <div class="card">
-    <div class="icon">☁️</div>
-    <h1>Yonyou Cloud</h1>
-    <p class="sub">用友雲進銷存管理系統<br>Access Yonyou Cloud ERP System</p>
-
-    <button class="btn" id="openBtn" onclick="doOpen()">
-      🌐 開啟用友雲 Open Now
-    </button>
-
-    <div class="link-row">
-      <a href="https://c2.yonyoucloud.com/" target="_blank" id="directLink">
-        直接連結（備用）Direct Link →
-      </a>
-    </div>
-
-    <p class="footer">Powered by FusionOA · Microsoft Teams App</p>
+  <div id="loading">
+    <div class="spinner"></div>
+    <div class="loading-text">正在載入用友雲...</div>
+    <div class="loading-sub">Loading Yonyou Cloud</div>
   </div>
 
-  <!-- Try both SDK versions -->
-  <script src="https://res.cdn.office.net/teams-js/2.0.0/js/MicrosoftTeams.min.js"></script>
-  <script src="https://res.cdn.office.net/teams-js/1.12.1/js/MicrosoftTeams.min.js"></script>
+  <iframe id="yonyou" src="https://c2.yonyoucloud.com/" allow="clipboard-read; clipboard-write"></iframe>
+
   <script>
-    var targetUrl = "https://c2.yonyoucloud.com/";
-    var opened = false;
+    var frame = document.getElementById('yonyou');
+    var loading = document.getElementById('loading');
 
-    function doOpen() {
-      if (opened) return;
-      opened = true;
-      document.getElementById('openBtn').textContent = '⏳ Opening...';
+    // Hide loading when iframe loads
+    frame.addEventListener('load', function() {
+      setTimeout(function() {
+        loading.classList.add('fade-out');
+        setTimeout(function() { loading.style.display = 'none'; }, 500);
+      }, 800);
+    });
 
-      // Strategy 1: Teams v2 SDK - openUrl (official way to open external URL)
-      try {
-        if (typeof microsoftTeams !== 'undefined' && microsoftTeams.pages && microsoftTeams.pages.openUrl) {
-          microsoftTeams.initialize();
-          microsoftTeams.pages.openUrl({
-            url: targetUrl,
-            openMode: "openDefault" // "openDefault" | "openNewWindow"
-          }, function(result) {
-            console.log('openUrl result:', result);
-          });
-          setTimeout(function() { opened = false; document.getElementById('openBtn').textContent = '🌐 開啟用友雲 Open Now'; }, 3000);
-          return;
-        }
-      } catch(e) { console.log('Strategy 1 failed:', e); }
-
-      // Strategy 2: executeDeepLink
+    // Initialize Microsoft Teams SDK
+    (function initTeams() {
       try {
         if (typeof microsoftTeams !== 'undefined') {
-          microsoftTeams.initialize();
-          // Use https://teams.microsoft.com/l/task/ format or direct URL
-          microsoftTeams.executeDeepLink(targetUrl);
-          setTimeout(function() { opened = false; document.getElementById('openBtn').textContent = '🌐 開啟用友雲 Open Now'; }, 3000);
-          return;
+          microsoftTeams.initialize(function() {
+            console.log('Teams initialized');
+            microsoftTeams.appInitialization.notifySuccess();
+          });
+          // Tell Teams to allow iframe navigation
+          microsoftTeams.settings.setValidityState(true);
+          // Register frame context
+          microsoftTeams.registerOnThemeChangeHandler(function(theme) {
+            document.body.style.backgroundColor = theme === 'dark' ? '#1f1f1f' : '#fff';
+          });
         }
-      } catch(e) { console.log('Strategy 2 failed:', e); }
+      } catch(e) {
+        console.log('Teams SDK not available:', e.message);
+      }
+    })();
 
-      // Strategy 3: window.open
-      try {
-        window.open(targetUrl, '_blank', 'noopener,noreferrer');
-        setTimeout(function() { opened = false; document.getElementById('openBtn').textContent = '🌐 開啟用友雲 Open Now'; }, 2000);
-        return;
-      } catch(e) { console.log('Strategy 3 failed:', e); }
-
-      // Strategy 4: location redirect
-      window.location.href = targetUrl;
-    }
-
-    // Auto-open after 1 second
-    setTimeout(doOpen, 1000);
+    // Safety timeout - hide loading after 15s regardless
+    setTimeout(function() {
+      loading.classList.add('fade-out');
+      setTimeout(function() { loading.style.display = 'none'; }, 500);
+    }, 15000);
   </script>
+
+  <!-- Load Teams SDK -->
+  <script src="https://res.cdn.office.net/teams-js/2.0.0/js/MicrosoftTeams.min.js"></script>
 </body>
 </html>
