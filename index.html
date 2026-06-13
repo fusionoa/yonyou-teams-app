@@ -4,93 +4,36 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Yonyou Cloud</title>
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    html, body { width: 100%; height: 100%; overflow: hidden; background: #fff; }
-    #loading {
-      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-      display: flex; flex-direction: column; align-items: center; justify-content: center;
-      background: #f5f5f5; font-family: "Segoe UI", sans-serif;
-      z-index: 10; transition: opacity 0.3s;
-    }
-    #loading.hidden { opacity: 0; pointer-events: none; }
-    #loading .spinner {
-      width: 40px; height: 40px; border: 4px solid #e0e0e0;
-      border-top-color: #E8450F; border-radius: 50%;
-      animation: spin 0.8s linear infinite;
-    }
-    #loading p { margin-top: 16px; color: #666; font-size: 14px; }
-    #loading .err { margin-top: 12px; color: #c00; font-size: 13px; max-width: 360px; text-align: center; line-height: 1.5; }
-    @keyframes spin { to { transform: rotate(360deg); } }
-    iframe {
-      width: 100%; height: 100%; border: none; position: absolute; top: 0; left: 0;
-    }
-  </style>
+  <script src="https://res.cdn.office.net/teams-js/2.0.0/js/MicrosoftTeams.min.js"></script>
 </head>
-<body>
-  <div id="loading">
-    <div class="spinner"></div>
-    <p id="msg">Loading Yonyou Cloud...</p>
-    <div id="err" class="err" style="display:none"></div>
+<body style="margin:0;padding:40px;font-family:'Segoe UI',sans-serif;text-align:center;background:#f5f5f5;">
+  <div style="color:#666;">
+    <p style="font-size:18px;margin-bottom:12px;">⏳ Opening Yonyou Cloud...</p>
+    <p style="font-size:13px;color:#999;">If not redirected automatically, click the button below.</p>
+    <a href="https://c2.yonyoucloud.com/" target="_blank"
+       style="display:inline-block;margin-top:20px;padding:10px 24px;background:#E8450F;color:#fff;text-decoration:none;border-radius:6px;font-size:14px;">
+      Open Yonyou Cloud →
+    </a>
   </div>
-
-  <iframe id="yonyou-frame" src="https://c2.yonyoucloud.com/"
-          allow="clipboard-read; clipboard-write; fullscreen">
-  </iframe>
-
   <script>
-    var frame = document.getElementById('yonyou-frame');
-    var loading = document.getElementById('loading');
-    var errMsg = document.getElementById('err');
-    var msgEl = document.getElementById('msg');
-
-    // Hide loading when iframe loads
-    frame.addEventListener('load', function() {
-      loading.classList.add('hidden');
-      setTimeout(function() { loading.style.display = 'none'; }, 300);
-    });
-
-    // Error handling for iframe
-    frame.addEventListener('error', function() {
-      showError('Failed to load Yonyou Cloud. Please check your network connection.');
-    });
-
-    // Fallback: if iframe doesn't load after 10s, show message
-    setTimeout(function() {
-      try {
-        // Check if iframe has content
-        if (frame.contentDocument && frame.contentDocument.location &&
-            frame.contentDocument.location.href !== 'about:blank') {
-          return; // It's loading fine
-        }
-      } catch(e) {
-        // Cross-origin error is expected - means the page loaded from another domain
-        // This actually indicates success in most cases
-        return;
-      }
-      // If we get here, might be stuck
-      msgEl.textContent = 'Still loading... This may take a moment.';
-    }, 10000);
-
-    // Long fallback - show help after 15s
-    setTimeout(function() {
-      if (loading.style.display !== 'none') {
-        showError('Yonyou Cloud is taking longer than expected.<br><br>This could be due to:<br>• Network connectivity<br>• Server response time<br>• Teams security policies<br><br>Please wait or refresh the tab.');
-      }
-    }, 15000);
-
-    function showError(text) {
-      errMsg.innerHTML = text;
-      errMsg.style.display = 'block';
-    }
-
-    // Try to initialize Teams SDK (non-critical)
+    // Initialize Teams context
     try {
       if (typeof microsoftTeams !== 'undefined') {
         microsoftTeams.initialize();
         microsoftTeams.appInitialization.notifySuccess();
       }
     } catch(e) {}
+
+    // Open URL in external browser after a short delay
+    setTimeout(function() {
+      try {
+        // Try Teams deep link to open in browser
+        microsoftTeams.executeDeepLink("https://c2.yonyoucloud.com/");
+      } catch(e) {
+        // Fallback: just redirect
+        window.location.href = "https://c2.yonyoucloud.com/";
+      }
+    }, 1500);
   </script>
 </body>
 </html>
