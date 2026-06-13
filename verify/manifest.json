@@ -2,8 +2,8 @@
   "$schema": "https://developer.microsoft.com/json-schemas/teams/v1.28/MicrosoftTeams.schema.json",
   "manifestVersion": "1.28",
   "version": "1.0.0",
-  "id": "cb53e8fc-9a66-4469-a790-34b6ce1cba75",
-  "packageName": "cb53e8fc9a664469a79034b6ce1cba75",
+  "id": "${TEAMS_APP_ID}",
+  "packageName": "com.yonyou.teams.tab",
   "developer": {
     "name": "Your Company",
     "websiteUrl": "https://c2.yonyoucloud.com/",
