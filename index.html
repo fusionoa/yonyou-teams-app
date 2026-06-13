@@ -4,36 +4,89 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Yonyou Cloud</title>
-  <script src="https://res.cdn.office.net/teams-js/2.0.0/js/MicrosoftTeams.min.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      margin: 0; padding: 40px; font-family: 'Segoe UI', sans-serif;
+      text-align: center; background: #f5f5f5; min-height: 100vh;
+    }
+    .container { max-width: 480px; margin: 0 auto; }
+    .logo { font-size: 48px; margin-bottom: 16px; }
+    h1 { color: #333; font-size: 22px; margin-bottom: 8px; }
+    p.desc { color: #888; font-size: 14px; margin-bottom: 28px; line-height: 1.5; }
+    .btn {
+      display: block; width: 100%; padding: 14px 24px;
+      background: #E8450F; color: #fff; text-decoration: none;
+      border-radius: 8px; font-size: 16px; font-weight: 600;
+      cursor: pointer; border: none; transition: background 0.2s;
+    }
+    .btn:hover { background: #c73a0d; }
+    .btn-secondary {
+      display: inline-block; margin-top: 12px; padding: 10px 20px;
+      background: #fff; color: #666; text-decoration: none;
+      border: 1px solid #ddd; border-radius: 6px; font-size: 13px;
+    }
+    .btn-secondary:hover { background: #f9f9f9; }
+    .note { margin-top: 24px; color: #aaa; font-size: 12px; line-height: 1.6; }
+  </style>
 </head>
-<body style="margin:0;padding:40px;font-family:'Segoe UI',sans-serif;text-align:center;background:#f5f5f5;">
-  <div style="color:#666;">
-    <p style="font-size:18px;margin-bottom:12px;">⏳ Opening Yonyou Cloud...</p>
-    <p style="font-size:13px;color:#999;">If not redirected automatically, click the button below.</p>
-    <a href="https://c2.yonyoucloud.com/" target="_blank"
-       style="display:inline-block;margin-top:20px;padding:10px 24px;background:#E8450F;color:#fff;text-decoration:none;border-radius:6px;font-size:14px;">
-      Open Yonyou Cloud →
-    </a>
-  </div>
-  <script>
-    // Initialize Teams context
-    try {
-      if (typeof microsoftTeams !== 'undefined') {
-        microsoftTeams.initialize();
-        microsoftTeams.appInitialization.notifySuccess();
-      }
-    } catch(e) {}
+<body>
+  <div class="container">
+    <div class="logo">☁️</div>
+    <h1>Yonyou Cloud</h1>
+    <p class="desc">用友雲進銷存管理系統<br>Click below to open in your browser.</p>
 
-    // Open URL in external browser after a short delay
-    setTimeout(function() {
+    <!-- Primary: Teams deep link (opens external browser) -->
+    <button class="btn" onclick="openExternal()">
+      🌐 Open Yonyou Cloud
+    </button>
+
+    <!-- Fallback: direct link -->
+    <br>
+    <a class="btn-secondary" href="https://c2.yonyoucloud.com/" target="_blank" id="fallback-link">
+      🔗 Direct Link (if button doesn't work)
+    </a>
+
+    <p class="note">
+      The system will open in your default browser.<br>
+      系統將在你的預設瀏覽器中打開。
+    </p>
+  </div>
+
+  <script src="https://res.cdn.office.net/teams-js/2.0.0/js/MicrosoftTeams.min.js"></script>
+  <script>
+    function openExternal() {
+      var url = "https://c2.yonyoucloud.com/";
+
+      // Method 1: Teams SDK executeDeepLink - opens in external browser
       try {
-        // Try Teams deep link to open in browser
-        microsoftTeams.executeDeepLink("https://c2.yonyoucloud.com/");
-      } catch(e) {
-        // Fallback: just redirect
-        window.location.href = "https://c2.yonyoucloud.com/";
-      }
-    }, 1500);
+        if (typeof microsoftTeams !== 'undefined') {
+          microsoftTeams.initialize();
+          // This tells Teams to open URL externally
+          microsoftTeams.executeDeepLink(url + "&launchOutside=true");
+          return;
+        }
+      } catch(e) {}
+
+      // Method 2: window.open with _blank
+      try {
+        window.open(url, '_blank');
+        return;
+      } catch(e) {}
+
+      // Method 3: Direct location change
+      window.location.href = url;
+    }
+
+    // Auto-trigger on load (with small delay for Teams init)
+    setTimeout(function() {
+      openExternal();
+    }, 800);
+
+    // Also try on button click for fallback
+    document.getElementById('fallback-link').addEventListener('click', function() {
+      this.href = "https://c2.yonyoucloud.com/?t=" + Date.now();
+    });
   </script>
 </body>
 </html>
