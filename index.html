@@ -8,85 +8,106 @@
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
       margin: 0; padding: 40px; font-family: 'Segoe UI', sans-serif;
-      text-align: center; background: #f5f5f5; min-height: 100vh;
+      text-align: center; background: linear-gradient(135deg, #f5f5f5 0%, #e8e8e8 100%);
+      min-height: 100vh;
     }
-    .container { max-width: 480px; margin: 0 auto; }
-    .logo { font-size: 48px; margin-bottom: 16px; }
-    h1 { color: #333; font-size: 22px; margin-bottom: 8px; }
-    p.desc { color: #888; font-size: 14px; margin-bottom: 28px; line-height: 1.5; }
+    .card {
+      background: #fff; border-radius: 16px; padding: 48px 32px;
+      max-width: 440px; margin: 0 auto;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+    }
+    .icon { font-size: 56px; margin-bottom: 20px; }
+    h1 { color: #222; font-size: 24px; margin-bottom: 8px; font-weight: 700; }
+    .sub { color: #888; font-size: 14px; margin-bottom: 32px; line-height: 1.6; }
     .btn {
-      display: block; width: 100%; padding: 14px 24px;
-      background: #E8450F; color: #fff; text-decoration: none;
-      border-radius: 8px; font-size: 16px; font-weight: 600;
-      cursor: pointer; border: none; transition: background 0.2s;
+      display: block; width: 100%; padding: 16px 28px;
+      background: linear-gradient(135deg, #E8450F, #ff6b35);
+      color: #fff; text-decoration: none; border-radius: 10px;
+      font-size: 17px; font-weight: 600; cursor: pointer;
+      border: none; transition: transform 0.15s, box-shadow 0.15s;
+      box-shadow: 0 4px 12px rgba(232,69,15,0.3);
     }
-    .btn:hover { background: #c73a0d; }
-    .btn-secondary {
-      display: inline-block; margin-top: 12px; padding: 10px 20px;
-      background: #fff; color: #666; text-decoration: none;
-      border: 1px solid #ddd; border-radius: 6px; font-size: 13px;
+    .btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(232,69,15,0.4); }
+    .btn:active { transform: translateY(0); }
+    .link-row { margin-top: 20px; }
+    .link-row a {
+      color: #E8450F; font-size: 13px; text-decoration: none;
+      border-bottom: 1px dashed #E8450F;
     }
-    .btn-secondary:hover { background: #f9f9f9; }
-    .note { margin-top: 24px; color: #aaa; font-size: 12px; line-height: 1.6; }
+    .link-row a:hover { border-bottom-style: solid; }
+    .footer { margin-top: 32px; color: #bbb; font-size: 11px; }
   </style>
 </head>
 <body>
-  <div class="container">
-    <div class="logo">☁️</div>
+  <div class="card">
+    <div class="icon">☁️</div>
     <h1>Yonyou Cloud</h1>
-    <p class="desc">用友雲進銷存管理系統<br>Click below to open in your browser.</p>
+    <p class="sub">用友雲進銷存管理系統<br>Access Yonyou Cloud ERP System</p>
 
-    <!-- Primary: Teams deep link (opens external browser) -->
-    <button class="btn" onclick="openExternal()">
-      🌐 Open Yonyou Cloud
+    <button class="btn" id="openBtn" onclick="doOpen()">
+      🌐 開啟用友雲 Open Now
     </button>
 
-    <!-- Fallback: direct link -->
-    <br>
-    <a class="btn-secondary" href="https://c2.yonyoucloud.com/" target="_blank" id="fallback-link">
-      🔗 Direct Link (if button doesn't work)
-    </a>
+    <div class="link-row">
+      <a href="https://c2.yonyoucloud.com/" target="_blank" id="directLink">
+        直接連結（備用）Direct Link →
+      </a>
+    </div>
 
-    <p class="note">
-      The system will open in your default browser.<br>
-      系統將在你的預設瀏覽器中打開。
-    </p>
+    <p class="footer">Powered by FusionOA · Microsoft Teams App</p>
   </div>
 
+  <!-- Try both SDK versions -->
   <script src="https://res.cdn.office.net/teams-js/2.0.0/js/MicrosoftTeams.min.js"></script>
+  <script src="https://res.cdn.office.net/teams-js/1.12.1/js/MicrosoftTeams.min.js"></script>
   <script>
-    function openExternal() {
-      var url = "https://c2.yonyoucloud.com/";
+    var targetUrl = "https://c2.yonyoucloud.com/";
+    var opened = false;
 
-      // Method 1: Teams SDK executeDeepLink - opens in external browser
+    function doOpen() {
+      if (opened) return;
+      opened = true;
+      document.getElementById('openBtn').textContent = '⏳ Opening...';
+
+      // Strategy 1: Teams v2 SDK - openUrl (official way to open external URL)
+      try {
+        if (typeof microsoftTeams !== 'undefined' && microsoftTeams.pages && microsoftTeams.pages.openUrl) {
+          microsoftTeams.initialize();
+          microsoftTeams.pages.openUrl({
+            url: targetUrl,
+            openMode: "openDefault" // "openDefault" | "openNewWindow"
+          }, function(result) {
+            console.log('openUrl result:', result);
+          });
+          setTimeout(function() { opened = false; document.getElementById('openBtn').textContent = '🌐 開啟用友雲 Open Now'; }, 3000);
+          return;
+        }
+      } catch(e) { console.log('Strategy 1 failed:', e); }
+
+      // Strategy 2: executeDeepLink
       try {
         if (typeof microsoftTeams !== 'undefined') {
           microsoftTeams.initialize();
-          // This tells Teams to open URL externally
-          microsoftTeams.executeDeepLink(url + "&launchOutside=true");
+          // Use https://teams.microsoft.com/l/task/ format or direct URL
+          microsoftTeams.executeDeepLink(targetUrl);
+          setTimeout(function() { opened = false; document.getElementById('openBtn').textContent = '🌐 開啟用友雲 Open Now'; }, 3000);
           return;
         }
-      } catch(e) {}
+      } catch(e) { console.log('Strategy 2 failed:', e); }
 
-      // Method 2: window.open with _blank
+      // Strategy 3: window.open
       try {
-        window.open(url, '_blank');
+        window.open(targetUrl, '_blank', 'noopener,noreferrer');
+        setTimeout(function() { opened = false; document.getElementById('openBtn').textContent = '🌐 開啟用友雲 Open Now'; }, 2000);
         return;
-      } catch(e) {}
+      } catch(e) { console.log('Strategy 3 failed:', e); }
 
-      // Method 3: Direct location change
-      window.location.href = url;
+      // Strategy 4: location redirect
+      window.location.href = targetUrl;
     }
 
-    // Auto-trigger on load (with small delay for Teams init)
-    setTimeout(function() {
-      openExternal();
-    }, 800);
-
-    // Also try on button click for fallback
-    document.getElementById('fallback-link').addEventListener('click', function() {
-      this.href = "https://c2.yonyoucloud.com/?t=" + Date.now();
-    });
+    // Auto-open after 1 second
+    setTimeout(doOpen, 1000);
   </script>
 </body>
 </html>
