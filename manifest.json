@@ -27,7 +27,7 @@
     {
       "entityId": "yonyou-tab",
       "name": "用友雲",
-      "contentUrl": "${TAB_URL}",
+      "contentUrl": "https://fusionoa.github.io/yonyou-teams-app/",
       "websiteUrl": "https://c2.yonyoucloud.com/",
       "scopes": ["personal"]
     }
