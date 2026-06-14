@@ -6,12 +6,13 @@
   <title>Yonyou Cloud</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    html, body { width: 100%; height: 100%; overflow: hidden; background: #fff; }
+    html, body { width: 100%; height: 100%; overflow: hidden; background: #fff; font-family: "Segoe UI", sans-serif; }
+
     #loading {
       position: fixed; top: 0; left: 0; width: 100%; height: 100%;
       display: flex; flex-direction: column; align-items: center; justify-content: center;
-      background: linear-gradient(135deg, #f8f9fa, #e9ecef); font-family: "Segoe UI", sans-serif;
-      z-index: 10; transition: opacity 0.5s ease;
+      background: linear-gradient(135deg, #f8f9fa, #e9ecef); z-index: 10;
+      transition: opacity 0.5s ease;
     }
     #loading.fade-out { opacity: 0; pointer-events: none; }
     .spinner {
@@ -22,9 +23,39 @@
     @keyframes spin { to { transform: rotate(360deg); } }
     .loading-text { color: #495057; font-size: 15px; font-weight: 500; }
     .loading-sub { color: #868e96; font-size: 12px; margin-top: 6px; }
+
+    /* iframe 容器 - 支援縮放 */
+    #frame-container {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      transform-origin: top left;
+    }
+
     iframe {
-      width: 100%; height: 100%; border: none;
-      position: absolute; top: 0; left: 0;
+      width: 1280px;   /* 桌面寬度 */
+      height: 800px;   /* 桌面高度 */
+      border: none;
+      display: block;
+    }
+
+    /* 手機端提示 */
+    #mobile-hint {
+      display: none;
+      position: fixed;
+      bottom: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0,0,0,0.7);
+      color: #fff;
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 12px;
+      z-index: 5;
+      pointer-events: none;
     }
   </style>
 </head>
@@ -35,11 +66,50 @@
     <div class="loading-sub">Loading Yonyou Cloud</div>
   </div>
 
-  <iframe id="yonyou" src="https://c2.yonyoucloud.com/" allow="clipboard-read; clipboard-write"></iframe>
+  <div id="frame-container">
+    <iframe id="yonyou" src="https://c2.yonyoucloud.com/" allow="clipboard-read; clipboard-write" sandbox="allow-same-origin allow-scripts allow-popups allow-forms allow-downloads"></iframe>
+  </div>
+
+  <div id="mobile-hint">👆 雙指可縮放頁面</div>
 
   <script>
     var frame = document.getElementById('yonyou');
+    var container = document.getElementById('frame-container');
     var loading = document.getElementById('loading');
+    var mobileHint = document.getElementById('mobile-hint');
+
+    // 根據螢幕大小調整 iframe 縮放
+    function adjustScale() {
+      var w = window.innerWidth;
+      var h = window.innerHeight;
+      // 目標：讓 1280x800 的桌面內容完整顯示
+      var scaleX = w / 1280;
+      var scaleY = h / 800;
+      var scale = Math.min(scaleX, scaleY);
+
+      if (scale < 1) {
+        // 手機或小螢幕：縮小 iframe
+        container.style.transform = 'scale(' + scale + ')';
+        container.style.width = (1280 * scale) + 'px';
+        container.style.height = (800 * scale) + 'px';
+        mobileHint.style.display = 'block';
+
+        // 居中顯示
+        var offsetX = (w - 1280 * scale) / 2;
+        var offsetY = (h - 800 * scale) / 2;
+        if (offsetY > 0) {
+          container.style.marginTop = offsetY + 'px';
+        }
+      } else {
+        // 大螢幕：正常大小
+        container.style.transform = 'none';
+        container.style.width = '100%';
+        container.style.height = '100%';
+        frame.style.width = '100%';
+        frame.style.height = '100%';
+        mobileHint.style.display = 'none';
+      }
+    }
 
     // Hide loading when iframe loads
     frame.addEventListener('load', function() {
@@ -57,9 +127,7 @@
             console.log('Teams initialized');
             microsoftTeams.appInitialization.notifySuccess();
           });
-          // Tell Teams to allow iframe navigation
           microsoftTeams.settings.setValidityState(true);
-          // Register frame context
           microsoftTeams.registerOnThemeChangeHandler(function(theme) {
             document.body.style.backgroundColor = theme === 'dark' ? '#1f1f1f' : '#fff';
           });
@@ -74,6 +142,13 @@
       loading.classList.add('fade-out');
       setTimeout(function() { loading.style.display = 'none'; }, 500);
     }, 15000);
+
+    // Run on load and resize
+    window.addEventListener('resize', adjustScale);
+    window.addEventListener('orientationchange', function() {
+      setTimeout(adjustScale, 300);
+    });
+    adjustScale();
   </script>
 
   <!-- Load Teams SDK -->
