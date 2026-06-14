@@ -2,11 +2,15 @@
 <html lang="zh-HK">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
   <title>Yonyou Cloud</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    html, body { width: 100%; height: 100%; overflow: hidden; background: #fff; font-family: "Segoe UI", sans-serif; }
+    html, body {
+      width: 100%; height: 100%; overflow: auto;
+      background: #fff; font-family: "Segoe UI", sans-serif;
+      -webkit-overflow-scrolling: touch;
+    }
 
     #loading {
       position: fixed; top: 0; left: 0; width: 100%; height: 100%;
@@ -24,38 +28,28 @@
     .loading-text { color: #495057; font-size: 15px; font-weight: 500; }
     .loading-sub { color: #868e96; font-size: 12px; margin-top: 6px; }
 
-    /* iframe 容器 - 支援縮放 */
-    #frame-container {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      overflow: hidden;
-      transform-origin: top left;
-    }
-
+    /* iframe - 自適應寬度 */
     iframe {
-      width: 1280px;   /* 桌面寬度 */
-      height: 800px;   /* 桌面高度 */
+      width: 100%;
+      min-height: calc(100vh);
       border: none;
       display: block;
     }
 
-    /* 手機端提示 */
     #mobile-hint {
       display: none;
       position: fixed;
       bottom: 10px;
       left: 50%;
       transform: translateX(-50%);
-      background: rgba(0,0,0,0.7);
+      background: rgba(232,69,15,0.9);
       color: #fff;
-      padding: 8px 16px;
+      padding: 6px 14px;
       border-radius: 20px;
-      font-size: 12px;
+      font-size: 11px;
       z-index: 5;
       pointer-events: none;
+      white-space: nowrap;
     }
   </style>
 </head>
@@ -66,50 +60,14 @@
     <div class="loading-sub">Loading Yonyou Cloud</div>
   </div>
 
-  <div id="frame-container">
-    <iframe id="yonyou" src="https://c2.yonyoucloud.com/" allow="clipboard-read; clipboard-write" sandbox="allow-same-origin allow-scripts allow-popups allow-forms allow-downloads"></iframe>
-  </div>
+  <iframe id="yonyou" src="https://c2.yonyoucloud.com/" allow="clipboard-read; clipboard-write"></iframe>
 
-  <div id="mobile-hint">👆 雙指可縮放頁面</div>
+  <div id="mobile-hint">👆 可左右滑動查看更多內容</div>
 
   <script>
     var frame = document.getElementById('yonyou');
-    var container = document.getElementById('frame-container');
     var loading = document.getElementById('loading');
     var mobileHint = document.getElementById('mobile-hint');
-
-    // 根據螢幕大小調整 iframe 縮放
-    function adjustScale() {
-      var w = window.innerWidth;
-      var h = window.innerHeight;
-      // 目標：讓 1280x800 的桌面內容完整顯示
-      var scaleX = w / 1280;
-      var scaleY = h / 800;
-      var scale = Math.min(scaleX, scaleY);
-
-      if (scale < 1) {
-        // 手機或小螢幕：縮小 iframe
-        container.style.transform = 'scale(' + scale + ')';
-        container.style.width = (1280 * scale) + 'px';
-        container.style.height = (800 * scale) + 'px';
-        mobileHint.style.display = 'block';
-
-        // 居中顯示
-        var offsetX = (w - 1280 * scale) / 2;
-        var offsetY = (h - 800 * scale) / 2;
-        if (offsetY > 0) {
-          container.style.marginTop = offsetY + 'px';
-        }
-      } else {
-        // 大螢幕：正常大小
-        container.style.transform = 'none';
-        container.style.width = '100%';
-        container.style.height = '100%';
-        frame.style.width = '100%';
-        frame.style.height = '100%';
-        mobileHint.style.display = 'none';
-      }
-    }
 
     // Hide loading when iframe loads
     frame.addEventListener('load', function() {
@@ -137,18 +95,22 @@
       }
     })();
 
-    // Safety timeout - hide loading after 15s regardless
+    // Safety timeout
     setTimeout(function() {
       loading.classList.add('fade-out');
       setTimeout(function() { loading.style.display = 'none'; }, 500);
     }, 15000);
 
-    // Run on load and resize
-    window.addEventListener('resize', adjustScale);
-    window.addEventListener('orientationchange', function() {
-      setTimeout(adjustScale, 300);
-    });
-    adjustScale();
+    // Detect mobile and show hint
+    if (/Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent)) {
+      mobileHint.style.display = 'block';
+      // Auto hide hint after 4s
+      setTimeout(function() {
+        mobileHint.style.opacity = '0';
+        mobileHint.style.transition = 'opacity 0.5s';
+        setTimeout(function() { mobileHint.style.display = 'none'; }, 500);
+      }, 4000);
+    }
   </script>
 
   <!-- Load Teams SDK -->
