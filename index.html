@@ -28,10 +28,17 @@
     .loading-text { color: #495057; font-size: 15px; font-weight: 500; }
     .loading-sub { color: #868e96; font-size: 12px; margin-top: 6px; }
 
-    /* iframe - 自適應寬度 */
-    iframe {
+    /* iframe 容器 */
+    #frame-container {
       width: 100%;
-      min-height: calc(100vh);
+      overflow-x: auto;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    iframe {
+      width: 1440px;
+      height: 900px;
       border: none;
       display: block;
     }
@@ -57,19 +64,20 @@
   <div id="loading">
     <div class="spinner"></div>
     <div class="loading-text">正在載入用友雲...</div>
-    <div class="loading-sub">Loading Yonyou Cloud</div>
+    <div class="loading-sub">Loading Yonyou Cloud (1440×900)</div>
   </div>
 
-  <iframe id="yonyou" src="https://c2.yonyoucloud.com/" allow="clipboard-read; clipboard-write"></iframe>
+  <div id="frame-container">
+    <iframe id="yonyou" src="https://c2.yonyoucloud.com/" allow="clipboard-read; clipboard-write"></iframe>
+  </div>
 
-  <div id="mobile-hint">👆 可左右滑動查看更多內容</div>
+  <div id="mobile-hint">👆 可滑動查看更多內容 (1440×900)</div>
 
   <script>
     var frame = document.getElementById('yonyou');
     var loading = document.getElementById('loading');
     var mobileHint = document.getElementById('mobile-hint');
 
-    // Hide loading when iframe loads
     frame.addEventListener('load', function() {
       setTimeout(function() {
         loading.classList.add('fade-out');
@@ -77,7 +85,6 @@
       }, 800);
     });
 
-    // Initialize Microsoft Teams SDK
     (function initTeams() {
       try {
         if (typeof microsoftTeams !== 'undefined') {
@@ -95,16 +102,13 @@
       }
     })();
 
-    // Safety timeout
     setTimeout(function() {
       loading.classList.add('fade-out');
       setTimeout(function() { loading.style.display = 'none'; }, 500);
     }, 15000);
 
-    // Detect mobile and show hint
     if (/Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent)) {
       mobileHint.style.display = 'block';
-      // Auto hide hint after 4s
       setTimeout(function() {
         mobileHint.style.opacity = '0';
         mobileHint.style.transition = 'opacity 0.5s';
@@ -113,7 +117,6 @@
     }
   </script>
 
-  <!-- Load Teams SDK -->
   <script src="https://res.cdn.office.net/teams-js/2.0.0/js/MicrosoftTeams.min.js"></script>
 </body>
 </html>
