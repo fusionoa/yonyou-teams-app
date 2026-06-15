@@ -25,92 +25,90 @@
       border-radius: 3px; background: #fff; color: #495057;
       font-size: 10px; cursor: pointer; transition: all 0.2s;
       text-decoration: none; display: inline-block;
-      flex-shrink: 0;
     }
     .lang-btn:hover, .lang-btn.active {
       background: #E8450F; color: #fff; border-color: #E8450F;
     }
-    .lang-label { color: #868e96; font-size: 10px; margin-right: 4px; flex-shrink: 0; }
+    .lang-label { color: #868e96; font-size: 10px; margin-right: 4px; }
 
-    #loading {
-      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-      display: flex; flex-direction: column; align-items: center; justify-content: center;
-      background: linear-gradient(135deg, #f8f9fa, #e9ecef); z-index: 10;
-      transition: opacity 0.5s ease;
+    #login-panel {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      height: calc(100% - 28px);
+      margin-top: 28px;
+      background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+      padding: 20px;
     }
-    #loading.fade-out { opacity: 0; pointer-events: none; }
-    .spinner {
-      width: 44px; height: 44px; border: 4px solid #dee2e6;
-      border-top-color: #E8450F; border-radius: 50%;
-      animation: spin 0.8s linear infinite; margin-bottom: 20px;
+    .login-card {
+      background: #fff; border-radius: 8px; padding: 28px 32px;
+      max-width: 360px; width: 100%;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+      text-align: center;
     }
-    @keyframes spin { to { transform: rotate(360deg); } }
-    .loading-text { color: #495057; font-size: 15px; font-weight: 500; }
-    .loading-sub { color: #868e96; font-size: 12px; margin-top: 6px; }
+    .login-card h2 { color: #E8450F; font-size: 20px; margin-bottom: 8px; }
+    .login-card .sub { color: #868e96; font-size: 12px; margin-bottom: 20px; }
+    .login-btn {
+      display: block; width: 100%; padding: 12px;
+      background: #E8450F; color: #fff; border: none;
+      border-radius: 4px; font-size: 14px; font-weight: 500;
+      cursor: pointer; text-decoration: none; margin-bottom: 10px;
+    }
+    .login-btn:hover { background: #d13e0c; }
+    .login-btn.secondary {
+      background: #fff; color: #E8450F; border: 1px solid #E8450F;
+    }
+    .login-btn.secondary:hover { background: #fef2ee; }
+    .login-info {
+      color: #868e96; font-size: 11px; margin-top: 16px;
+      line-height: 1.5;
+    }
+    .login-info strong { color: #495057; }
+    .step { margin: 12px 0; text-align: left; }
+    .step-num {
+      display: inline-block; width: 22px; height: 22px;
+      background: #E8450F; color: #fff; border-radius: 50%;
+      font-size: 12px; text-align: center; line-height: 22px;
+      margin-right: 8px; vertical-align: middle;
+    }
+    .step-text { font-size: 13px; color: #495057; vertical-align: middle; }
 
     #frame-container {
       width: 100%;
+      height: calc(100% - 28px);
       overflow-x: auto;
       overflow-y: auto;
       -webkit-overflow-scrolling: touch;
       margin-top: 28px;
-      height: calc(100% - 28px);
     }
 
     iframe {
       border: none;
       display: block;
     }
-
     iframe.mobile-fit {
       width: 100%;
       height: 100%;
       min-height: calc(100vh - 28px);
     }
-
     iframe.desktop-mode {
       width: 1440px;
       height: 900px;
     }
 
-    /* SSO 驗證提示遮罩 */
-    #sso-overlay {
-      display: none;
-      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(0,0,0,0.5); z-index: 9;
-      flex-direction: column; align-items: center; justify-content: center;
-    }
-    #sso-overlay.show { display: flex; }
-    .sso-card {
-      background: #fff; padding: 24px 32px; border-radius: 8px;
-      max-width: 320px; text-align: center;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-    }
-    .sso-card h3 { color: #E8450F; margin-bottom: 12px; font-size: 16px; }
-    .sso-card p { color: #495057; font-size: 13px; margin-bottom: 16px; line-height: 1.5; }
-    .sso-btn {
-      display: inline-block; padding: 10px 24px;
-      background: #E8450F; color: #fff; border: none;
-      border-radius: 4px; font-size: 14px; cursor: pointer;
-      text-decoration: none;
-    }
-    .sso-btn:hover { background: #d13e0c; }
-
     #mobile-hint {
       display: none;
       position: fixed;
-      bottom: 10px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: rgba(232,69,15,0.9);
-      color: #fff;
-      padding: 6px 14px;
-      border-radius: 20px;
-      font-size: 11px;
-      z-index: 5;
-      pointer-events: none;
-      white-space: nowrap;
+      bottom: 10px; left: 50%; transform: translateX(-50%);
+      background: rgba(232,69,15,0.9); color: #fff;
+      padding: 6px 14px; border-radius: 20px;
+      font-size: 11px; z-index: 5;
+      pointer-events: none; white-space: nowrap;
     }
+
+    .hidden { display: none !important; }
   </style>
 </head>
 <body>
@@ -121,28 +119,29 @@
     <a class="lang-btn active" id="btn-cn" href="#" onclick="switchLang('cn')">简体</a>
   </div>
 
-  <div id="loading">
-    <div class="spinner"></div>
-    <div class="loading-text">正在載入用友雲...</div>
-    <div class="loading-sub">Loading Yonyou Cloud</div>
-  </div>
+  <!-- 登入引導面板 -->
+  <div id="login-panel">
+    <div class="login-card">
+      <h2>用友雲 YonSuite</h2>
+      <div class="sub">SSO 企業登入</div>
 
-  <!-- SSO 驗證跳轉提示 -->
-  <div id="sso-overlay">
-    <div class="sso-card">
-      <h3>🔐 M365 SSO 驗證</h3>
-      <p>用友雲 SSO 登入需要跳轉到 Microsoft 365 進行身份驗證。點擊下方按鈕在新視窗完成驗證，驗證完成後回到此頁面即可。</p>
-      <a class="sso-btn" id="sso-link" href="#" target="_blank">前往 M365 驗證 →</a>
-      <p style="margin-top:12px;font-size:11px;color:#868e96;">驗證完成後請回到此頁面刷新</p>
+      <div class="step"><span class="step-num">1</span><span class="step-text">點擊下方按鈕，在新視窗完成 M365 驗證</span></div>
+      <div class="step"><span class="step-num">2</span><span class="step-text">輸入企業 SSO 編碼：<strong>yongyou</strong></span></div>
+      <div class="step"><span class="step-num">3</span><span class="step-text">完成 M365 身份驗證後回到此頁面</span></div>
+
+      <a class="login-btn" id="sso-external" href="#" target="_blank" onclick="openSSO()">前往 SSO 登入 →</a>
+      <button class="login-btn secondary" onclick="enterApp()">✅ 已完成登入，進入用友雲</button>
+
+      <div class="login-info">
+        ⚠️ M365 驗證頁面不支援 iframe 嵌入<br>
+        霈在新視窗完成驗證後再回到此頁面
+      </div>
     </div>
   </div>
 
-  <div id="frame-container">
-    <iframe id="yonyou" 
-      src="https://c2.yonyoucloud.com/iuap-uuas-user/fe-free/#/ssologin?locale=zh_CN&service=https%3A%2F%2Fc2.yonyoucloud.com%2Flogin&themeColor=" 
-      allow="clipboard-read; clipboard-write"
-      sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox allow-top-navigation-by-user-activation">
-    </iframe>
+  <!-- iframe 容器（登入後顯示） -->
+  <div id="frame-container" class="hidden">
+    <iframe id="yonyou" src="" allow="clipboard-read; clipboard-write"></iframe>
   </div>
 
   <div id="mobile-hint">👆 可滑動查看更多內容</div>
@@ -154,67 +153,54 @@
       cn: 'https://c2.yonyoucloud.com/iuap-uuas-user/fe-free/#/ssologin?locale=zh_CN&service=https%3A%2F%2Fc2.yonyoucloud.com%2Flogin&themeColor='
     };
 
-    // M365 SSO 驗證 URL（用友雲跳轉的目標）
-    var M365_SSO_URL = 'https://login.microsoftonline.com/';
+    var YONYOU_HOME = 'https://c2.yonyoucloud.com/';
 
     var currentLang = 'cn';
     var frame = document.getElementById('yonyou');
-    var loading = document.getElementById('loading');
-    var mobileHint = document.getElementById('mobile-hint');
-    var ssoOverlay = document.getElementById('sso-overlay');
-    var ssoLink = document.getElementById('sso-link');
+    var loginPanel = document.getElementById('login-panel');
+    var frameContainer = document.getElementById('frame-container');
     var isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
 
-    if (isMobile) {
-      frame.classList.add('mobile-fit');
-    } else {
-      frame.classList.add('desktop-mode');
+    // 點擊 SSO 登入按鈕：在新視窗開啟 SSO 登入頁
+    function openSSO() {
+      var url = SSO_URLS[currentLang];
+      window.open(url, '_blank');
+      return true; // 允許 <a> 的默默行為（target=_blank）
+    }
+
+    // 已完成登入：切換到 iframe 顯示用友雲主頁
+    function enterApp() {
+      loginPanel.classList.add('hidden');
+      frameContainer.classList.remove('hidden');
+      frame.src = YONYOU_HOME;
+
+      if (isMobile) {
+        frame.classList.add('mobile-fit');
+      } else {
+        frame.classList.add('desktop-mode');
+      }
     }
 
     function switchLang(lang) {
       currentLang = lang;
-      frame.src = '';
-      setTimeout(function() {
-        frame.src = SSO_URLS[lang];
-      }, 100);
-
-      if (isMobile) {
-        frame.classList.remove('desktop-mode');
-        frame.classList.add('mobile-fit');
-      }
-
+      // 更新 SSO 按鈕連結
+      document.getElementById('sso-external').href = SSO_URLS[lang];
+      // 更新按鈕狀態
       document.querySelectorAll('.lang-btn').forEach(function(btn) { btn.classList.remove('active'); });
       document.getElementById('btn-' + lang).classList.add('active');
-
-      loading.style.display = 'flex';
-      loading.classList.remove('fade-out');
-      ssoOverlay.classList.remove('show');
-      startAutoSwitch();
-
+      // 如果已在 iframe 模式，重新載入
+      if (!loginPanel.classList.contains('hidden')) {
+        // 還在登入面板，只更新連結
+      } else {
+        // 已在 iframe 模式，刷新 iframe
+        frame.src = '';
+        setTimeout(function() { frame.src = YONYOU_HOME; }, 100);
+      }
       return false;
     }
 
-    // 延遲自動切換：60秒後切回桌面模式
-    var autoSwitchTimer = null;
-    function startAutoSwitch() {
-      if (autoSwitchTimer) clearTimeout(autoSwitchTimer);
-      if (isMobile) {
-        autoSwitchTimer = setTimeout(function() {
-          if (frame.classList.contains('mobile-fit')) {
-            frame.classList.remove('mobile-fit');
-            frame.classList.add('desktop-mode');
-          }
-        }, 60000);
-      }
-    }
-    startAutoSwitch();
-
-    frame.addEventListener('load', function() {
-      setTimeout(function() {
-        loading.classList.add('fade-out');
-        setTimeout(function() { loading.style.display = 'none'; }, 500);
-      }, 800);
-    });
+    // 初始化 SSO 連結
+    document.getElementById('sso-external').href = SSO_URLS[currentLang];
 
     (function initTeams() {
       try {
@@ -233,12 +219,8 @@
       }
     })();
 
-    setTimeout(function() {
-      loading.classList.add('fade-out');
-      setTimeout(function() { loading.style.display = 'none'; }, 500);
-    }, 15000);
-
     if (isMobile) {
+      var mobileHint = document.getElementById('mobile-hint');
       mobileHint.style.display = 'block';
       setTimeout(function() {
         mobileHint.style.opacity = '0';
