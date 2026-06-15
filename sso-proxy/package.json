@@ -1,0 +1,14 @@
+{
+  "name": "yonyou-sso-proxy",
+  "version": "1.0.0",
+  "description": "SSO Proxy for Yonyou Cloud integration with Microsoft Teams",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "axios": "^1.6.0"
+  }
+}
