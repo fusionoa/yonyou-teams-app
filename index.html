@@ -50,30 +50,51 @@
 
     #frame-container {
       width: 100%;
-      height: calc(100% - 44px);
       overflow-x: auto;
       overflow-y: auto;
       -webkit-overflow-scrolling: touch;
       margin-top: 28px;
-      transition: opacity 0.3s;
+      height: calc(100% - 28px);
     }
 
     iframe {
       border: none;
       display: block;
-      transition: width 0.3s, height 0.3s;
     }
 
     iframe.mobile-fit {
       width: 100%;
       height: 100%;
-      min-height: calc(100vh - 44px);
+      min-height: calc(100vh - 28px);
     }
 
     iframe.desktop-mode {
       width: 1440px;
       height: 900px;
     }
+
+    /* SSO 驗證提示遮罩 */
+    #sso-overlay {
+      display: none;
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.5); z-index: 9;
+      flex-direction: column; align-items: center; justify-content: center;
+    }
+    #sso-overlay.show { display: flex; }
+    .sso-card {
+      background: #fff; padding: 24px 32px; border-radius: 8px;
+      max-width: 320px; text-align: center;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    }
+    .sso-card h3 { color: #E8450F; margin-bottom: 12px; font-size: 16px; }
+    .sso-card p { color: #495057; font-size: 13px; margin-bottom: 16px; line-height: 1.5; }
+    .sso-btn {
+      display: inline-block; padding: 10px 24px;
+      background: #E8450F; color: #fff; border: none;
+      border-radius: 4px; font-size: 14px; cursor: pointer;
+      text-decoration: none;
+    }
+    .sso-btn:hover { background: #d13e0c; }
 
     #mobile-hint {
       display: none;
@@ -94,23 +115,37 @@
 </head>
 <body>
   <div id="lang-bar">
-    <span class="lang-label">語言 / Language：</span>
-    <a class="lang-btn" id="btn-en" href="#" onclick="switchLang('en')">English</a>
-    <a class="lang-btn" id="btn-tw" href="#" onclick="switchLang('tw')">繁體中文</a>
-    <a class="lang-btn active" id="btn-cn" href="#" onclick="switchLang('cn')">简体中文</a>
+    <span class="lang-label">語言：</span>
+    <a class="lang-btn" id="btn-en" href="#" onclick="switchLang('en')">EN</a>
+    <a class="lang-btn" id="btn-tw" href="#" onclick="switchLang('tw')">繁體</a>
+    <a class="lang-btn active" id="btn-cn" href="#" onclick="switchLang('cn')">简体</a>
   </div>
 
   <div id="loading">
     <div class="spinner"></div>
     <div class="loading-text">正在載入用友雲...</div>
-    <div class="loading-sub">Loading Yonyou Cloud (1440×900)</div>
+    <div class="loading-sub">Loading Yonyou Cloud</div>
+  </div>
+
+  <!-- SSO 驗證跳轉提示 -->
+  <div id="sso-overlay">
+    <div class="sso-card">
+      <h3>🔐 M365 SSO 驗證</h3>
+      <p>用友雲 SSO 登入需要跳轉到 Microsoft 365 進行身份驗證。點擊下方按鈕在新視窗完成驗證，驗證完成後回到此頁面即可。</p>
+      <a class="sso-btn" id="sso-link" href="#" target="_blank">前往 M365 驗證 →</a>
+      <p style="margin-top:12px;font-size:11px;color:#868e96;">驗證完成後請回到此頁面刷新</p>
+    </div>
   </div>
 
   <div id="frame-container">
-    <iframe id="yonyou" src="https://c2.yonyoucloud.com/iuap-uuas-user/fe-free/#/ssologin?locale=zh_CN&service=https%3A%2F%2Fc2.yonyoucloud.com%2Flogin&themeColor=" allow="clipboard-read; clipboard-write"></iframe>
+    <iframe id="yonyou" 
+      src="https://c2.yonyoucloud.com/iuap-uuas-user/fe-free/#/ssologin?locale=zh_CN&service=https%3A%2F%2Fc2.yonyoucloud.com%2Flogin&themeColor=" 
+      allow="clipboard-read; clipboard-write"
+      sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox allow-top-navigation-by-user-activation">
+    </iframe>
   </div>
 
-  <div id="mobile-hint">👆 可滑動查看更多內容 (1440×900)</div>
+  <div id="mobile-hint">👆 可滑動查看更多內容</div>
 
   <script>
     var SSO_URLS = {
@@ -119,13 +154,17 @@
       cn: 'https://c2.yonyoucloud.com/iuap-uuas-user/fe-free/#/ssologin?locale=zh_CN&service=https%3A%2F%2Fc2.yonyoucloud.com%2Flogin&themeColor='
     };
 
+    // M365 SSO 驗證 URL（用友雲跳轉的目標）
+    var M365_SSO_URL = 'https://login.microsoftonline.com/';
+
     var currentLang = 'cn';
     var frame = document.getElementById('yonyou');
     var loading = document.getElementById('loading');
     var mobileHint = document.getElementById('mobile-hint');
+    var ssoOverlay = document.getElementById('sso-overlay');
+    var ssoLink = document.getElementById('sso-link');
     var isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
 
-    // 手機端：登入頁用 mobile-fit，登入後切回桌面模式
     if (isMobile) {
       frame.classList.add('mobile-fit');
     } else {
@@ -134,13 +173,11 @@
 
     function switchLang(lang) {
       currentLang = lang;
-      // 先清空 src 再重新設定，強制 iframe 重新載入
       frame.src = '';
       setTimeout(function() {
         frame.src = SSO_URLS[lang];
       }, 100);
 
-      // 切語言時回到登入頁，手機用 mobile-fit
       if (isMobile) {
         frame.classList.remove('desktop-mode');
         frame.classList.add('mobile-fit');
@@ -151,14 +188,13 @@
 
       loading.style.display = 'flex';
       loading.classList.remove('fade-out');
-
-      // 重啟自動切換計時器
+      ssoOverlay.classList.remove('show');
       startAutoSwitch();
 
       return false;
     }
 
-    // 延遲自動切換：登入頁顯示後 60 秒自動切回桌面模式
+    // 延遲自動切換：60秒後切回桌面模式
     var autoSwitchTimer = null;
     function startAutoSwitch() {
       if (autoSwitchTimer) clearTimeout(autoSwitchTimer);
@@ -202,7 +238,7 @@
       setTimeout(function() { loading.style.display = 'none'; }, 500);
     }, 15000);
 
-    if (/Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent)) {
+    if (isMobile) {
       mobileHint.style.display = 'block';
       setTimeout(function() {
         mobileHint.style.opacity = '0';
