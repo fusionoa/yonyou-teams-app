@@ -16,19 +16,21 @@
       position: fixed; top: 0; left: 0; width: 100%;
       background: #fff; border-bottom: 1px solid #dee2e6;
       display: flex; align-items: center; justify-content: center;
-      padding: 5px 0; z-index: 8;
+      padding: 4px 8px; z-index: 8;
       box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      flex-wrap: wrap;
     }
     .lang-btn {
-      padding: 3px 10px; margin: 0 4px; border: 1px solid #adb5bd;
+      padding: 2px 8px; margin: 0 3px; border: 1px solid #adb5bd;
       border-radius: 3px; background: #fff; color: #495057;
-      font-size: 11px; cursor: pointer; transition: all 0.2s;
+      font-size: 10px; cursor: pointer; transition: all 0.2s;
       text-decoration: none; display: inline-block;
+      flex-shrink: 0;
     }
     .lang-btn:hover, .lang-btn.active {
       background: #E8450F; color: #fff; border-color: #E8450F;
     }
-    .lang-label { color: #868e96; font-size: 10px; margin-right: 4px; }
+    .lang-label { color: #868e96; font-size: 10px; margin-right: 4px; flex-shrink: 0; }
 
     #loading {
       position: fixed; top: 0; left: 0; width: 100%; height: 100%;
@@ -52,7 +54,7 @@
       overflow-x: auto;
       overflow-y: auto;
       -webkit-overflow-scrolling: touch;
-      margin-top: 30px;
+      margin-top: 28px;
       transition: opacity 0.3s;
     }
 
