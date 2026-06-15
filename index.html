@@ -12,6 +12,24 @@
       -webkit-overflow-scrolling: touch;
     }
 
+    #lang-bar {
+      position: fixed; top: 0; left: 0; width: 100%;
+      background: #fff; border-bottom: 1px solid #dee2e6;
+      display: flex; align-items: center; justify-content: center;
+      padding: 8px 0; z-index: 8;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    .lang-btn {
+      padding: 6px 18px; margin: 0 6px; border: 1px solid #adb5bd;
+      border-radius: 4px; background: #fff; color: #495057;
+      font-size: 13px; cursor: pointer; transition: all 0.2s;
+      text-decoration: none; display: inline-block;
+    }
+    .lang-btn:hover, .lang-btn.active {
+      background: #E8450F; color: #fff; border-color: #E8450F;
+    }
+    .lang-label { color: #868e96; font-size: 12px; margin-right: 8px; }
+
     #loading {
       position: fixed; top: 0; left: 0; width: 100%; height: 100%;
       display: flex; flex-direction: column; align-items: center; justify-content: center;
@@ -33,6 +51,7 @@
       overflow-x: auto;
       overflow-y: auto;
       -webkit-overflow-scrolling: touch;
+      margin-top: 44px;
     }
 
     iframe {
@@ -60,6 +79,13 @@
   </style>
 </head>
 <body>
+  <div id="lang-bar">
+    <span class="lang-label">語言 / Language：</span>
+    <a class="lang-btn" id="btn-en" href="#" onclick="switchLang('en')">English</a>
+    <a class="lang-btn" id="btn-tw" href="#" onclick="switchLang('tw')">繁體中文</a>
+    <a class="lang-btn active" id="btn-cn" href="#" onclick="switchLang('cn')">简体中文</a>
+  </div>
+
   <div id="loading">
     <div class="spinner"></div>
     <div class="loading-text">正在載入用友雲...</div>
@@ -67,15 +93,37 @@
   </div>
 
   <div id="frame-container">
-    <iframe id="yonyou" src="https://c2.yonyoucloud.com/" allow="clipboard-read; clipboard-write"></iframe>
+    <iframe id="yonyou" src="https://c2.yonyoucloud.com/iuap-uuas-user/fe-free/#/ssologin?locale=zh_CN&service=https%3A%2F%2Fc2.yonyoucloud.com%2Flogin&themeColor=" allow="clipboard-read; clipboard-write"></iframe>
   </div>
 
   <div id="mobile-hint">👆 可滑動查看更多內容 (1440×900)</div>
 
   <script>
+    var SSO_URLS = {
+      en: 'https://c2.yonyoucloud.com/iuap-uuas-user/fe-free/#/ssologin?locale=en_US&service=https%3A%2F%2Fc2.yonyoucloud.com%2Flogin&themeColor=',
+      tw: 'https://c2.yonyoucloud.com/iuap-uuas-user/fe-free/#/ssologin?locale=zh_TW&service=https%3A%2F%2Fc2.yonyoucloud.com%2Flogin&themeColor=',
+      cn: 'https://c2.yonyoucloud.com/iuap-uuas-user/fe-free/#/ssologin?locale=zh_CN&service=https%3A%2F%2Fc2.yonyoucloud.com%2Flogin&themeColor='
+    };
+
+    var currentLang = 'cn';
     var frame = document.getElementById('yonyou');
     var loading = document.getElementById('loading');
     var mobileHint = document.getElementById('mobile-hint');
+
+    function switchLang(lang) {
+      currentLang = lang;
+      frame.src = SSO_URLS[lang];
+
+      // 更新按鈕狀態
+      document.querySelectorAll('.lang-btn').forEach(function(btn) { btn.classList.remove('active'); });
+      document.getElementById('btn-' + lang).classList.add('active');
+
+      // 顯示 loading
+      loading.style.display = 'flex';
+      loading.classList.remove('fade-out');
+
+      return false;
+    }
 
     frame.addEventListener('load', function() {
       setTimeout(function() {
