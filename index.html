@@ -134,7 +134,11 @@
 
     function switchLang(lang) {
       currentLang = lang;
-      frame.src = SSO_URLS[lang];
+      // 先清空 src 再重新設定，強制 iframe 重新載入
+      frame.src = '';
+      setTimeout(function() {
+        frame.src = SSO_URLS[lang];
+      }, 100);
 
       // 切語言時回到登入頁，手機用 mobile-fit
       if (isMobile) {
