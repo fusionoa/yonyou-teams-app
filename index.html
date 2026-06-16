@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
   <title>Yonyou Cloud — Microsoft Teams</title>
+  <script src="https://res.cdn.office.net/teams-js/2.30.0/MicrosoftTeams.min.js"></script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { 
@@ -26,10 +27,7 @@
       width: 90%;
     }
     
-    .logo {
-      width: 64px; height: 64px;
-      margin: 0 auto 24px;
-    }
+    .logo { width: 64px; height: 64px; margin: 0 auto 24px; }
     
     h1 { font-size: 22px; font-weight: 600; color: #1a1a2e; margin-bottom: 8px; }
     .subtitle { font-size: 14px; color: #6b7280; margin-bottom: 32px; line-height: 1.6; }
@@ -51,18 +49,86 @@
       justify-content: center;
     }
     .sso-btn:hover { background: #005a9e; }
+    .sso-btn:disabled { background: #9ca3af; cursor: not-allowed; }
     
-    .note {
-      margin-top: 20px;
-      font-size: 12px;
-      color: #9ca3af;
-      line-height: 1.5;
+    .logout-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background: #fff;
+      color: #6b7280;
+      border: 1px solid #d1d5db;
+      padding: 10px 24px;
+      border-radius: 6px;
+      font-size: 14px;
+      cursor: pointer;
+      margin-top: 12px;
+      transition: all 0.2s;
     }
+    .logout-btn:hover { background: #f3f4f6; color: #374151; border-color: #9ca3af; }
+    
+    .note { margin-top: 20px; font-size: 12px; color: #9ca3af; line-height: 1.5; }
+    
+    .status {
+      margin-top: 16px;
+      padding: 12px;
+      border-radius: 6px;
+      font-size: 13px;
+      display: none;
+    }
+    .status.loading { background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; }
+    .status.error { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; }
+    .status.success { background: #f0fdf4; color: #16a34a; border: 1px solid #bbf7d0; }
+
+    /* App loaded state */
+    .app-frame {
+      width: 100%;
+      height: calc(100vh - 60px);
+      border: none;
+      display: none;
+    }
+    .top-bar {
+      width: 100%;
+      height: 56px;
+      background: #fff;
+      border-bottom: 1px solid #e5e7eb;
+      display: none;
+      align-items: center;
+      padding: 0 20px;
+      gap: 12px;
+    }
+    .top-bar.visible { display: flex; }
+    .top-bar-title { font-size: 15px; font-weight: 600; color: #1a1a2e; flex: 1; }
+    .top-bar-btn {
+      background: #fff;
+      color: #6b7280;
+      border: 1px solid #d1d5db;
+      padding: 6px 14px;
+      border-radius: 4px;
+      font-size: 13px;
+      cursor: pointer;
+    }
+    .top-bar-btn:hover { background: #f3f4f6; }
   </style>
 </head>
 <body>
 
-<div class="panel">
+<!-- Top bar (shown after SSO) -->
+<div class="top-bar" id="topBar">
+  <svg width="24" height="24" viewBox="0 0 64 64" fill="none">
+    <rect width="64" height="64" rx="8" fill="#0078d4"/>
+    <path d="M18 20h28c2.2 0 4 1.8 4 4v16c0 2.2-1.8 4-4 4H18c-2.2 0-4-1.8-4-4V24c0-2.2 1.8-4 4-4z" fill="white" opacity="0.9"/>
+  </svg>
+  <span class="top-bar-title">Yonyou Cloud</span>
+  <button class="top-bar-btn" onclick="doLogout()">登出</button>
+  <button class="top-bar-btn" onclick="showHome()">回首頁</button>
+</div>
+
+<!-- Yonyou Cloud iframe (shown after SSO) -->
+<iframe class="app-frame" id="appFrame" allow="fullscreen"></iframe>
+
+<!-- Home panel -->
+<div class="panel" id="homePanel">
   <svg class="logo" viewBox="0 0 64 64" fill="none">
     <rect width="64" height="64" rx="14" fill="#0078d4"/>
     <path d="M18 20h28c2.2 0 4 1.8 4 4v16c0 2.2-1.8 4-4 4H18c-2.2 0-4-1.8-4-4V24c0-2.2 1.8-4 4-4z" fill="white" opacity="0.9"/>
@@ -72,7 +138,7 @@
   <h1>Yonyou Cloud</h1>
   <p class="subtitle">使用 Microsoft 365 帳戶<br>安全登入用友雲端</p>
 
-  <button class="sso-btn" onclick="startSSO()">
+  <button class="sso-btn" id="ssoBtn" onclick="startSSO()">
     <svg width="20" height="20" viewBox="0 0 21 21" fill="none">
       <rect x="1" y="1" width="9" height="9" fill="#F25022"/>
       <rect x="11" y="1" width="9" height="9" fill="#7FBA00"/>
@@ -82,6 +148,10 @@
     使用 M365 帳戶 SSO 登入
   </button>
 
+  <button class="logout-btn" onclick="doLogout()">登出用友雲</button>
+
+  <div class="status" id="status"></div>
+
   <p class="note">
     點擊後將通過 Microsoft Azure AD 安全驗證<br>
     使用你已登入的 Teams 帳戶自動完成登入
@@ -89,14 +159,114 @@
 </div>
 
 <script>
-function startSSO() {
-  // Redirect the entire Teams Tab to the SSO entry point
-  // proxied through our domain to avoid iframe restrictions
-  const ssoUrl = window.location.origin + '/yonyou-sso/cas/thirdSaml2Login?thirdUCId=u10pzze8&service=' + 
-    encodeURIComponent(window.location.origin + '/yonyou-app/login?tenantId=w5f0xnbi');
+  let teamsInitialized = false;
+
+  // Initialize Teams SDK
+  async function initTeams() {
+    return new Promise((resolve, reject) => {
+      if (typeof microsoftTeams === 'undefined') {
+        // Not in Teams context (e.g., direct browser testing)
+        resolve(false);
+        return;
+      }
+
+      microsoftTeams.app.initialize().then(() => {
+        teamsInitialized = true;
+        resolve(true);
+      }).catch(() => {
+        resolve(false); // Not in Teams, ok for browser testing
+      });
+    });
+  }
+
+  function showStatus(msg, type) {
+    const el = document.getElementById('status');
+    el.textContent = msg;
+    el.className = 'status ' + type;
+    el.style.display = 'block';
+  }
+
+  function showApp() {
+    document.getElementById('homePanel').style.display = 'none';
+    document.getElementById('topBar').classList.add('visible');
+    const frame = document.getElementById('appFrame');
+    frame.style.display = 'block';
+    frame.src = window.location.origin + '/yonyou-app/';
+  }
+
+  function showHome() {
+    document.getElementById('homePanel').style.display = 'block';
+    document.getElementById('topBar').classList.remove('visible');
+    document.getElementById('appFrame').style.display = 'none';
+    document.getElementById('appFrame').src = 'about:blank';
+  }
+
+  function startSSO() {
+    const btn = document.getElementById('ssoBtn');
+    btn.disabled = true;
+    showStatus('正在打開登入視窗...', 'loading');
+
+    const ssoUrl = window.location.origin + '/yonyou-sso/cas/thirdSaml2Login?thirdUCId=u10pzze8&service=' + 
+      encodeURIComponent(window.location.origin + '/teams/sso-callback.html');
+
+    if (teamsInitialized) {
+      // Use Teams SDK authentication popup
+      microsoftTeams.authentication.authenticate({
+        url: ssoUrl,
+        width: 600,
+        height: 700,
+        title: '用友雲 SSO 登入'
+      }).then(result => {
+        // SSO completed successfully in the popup
+        showStatus('登入成功，正在載入...', 'success');
+        setTimeout(showApp, 500);
+      }).catch(err => {
+        showStatus('登入被取消或失敗', 'error');
+        btn.disabled = false;
+      });
+    } else {
+      // Fallback: open in same window (for browser testing outside Teams)
+      showStatus('非 Teams 環境，使用直接跳轉...', 'loading');
+      setTimeout(() => {
+        window.location.href = ssoUrl;
+      }, 500);
+    }
+  }
+
+  function doLogout() {
+    sessionStorage.clear();
+    localStorage.clear();
+    
+    const logoutUrl = window.location.origin + '/yonyou-sso/cas/logout?service=' + 
+      encodeURIComponent(window.location.origin + '/teams/');
+    
+    if (teamsInitialized) {
+      microsoftTeams.authentication.authenticate({
+        url: logoutUrl,
+        width: 400,
+        height: 300,
+        title: '登出'
+      }).then(() => {
+        showHome();
+      }).catch(() => {
+        showHome();
+      });
+    } else {
+      window.location.href = logoutUrl;
+    }
+  }
+
+  // On load: check if coming back from SSO callback
+  const urlParams = new URLSearchParams(window.location.search);
+  const ssoResult = urlParams.get('sso');
   
-  window.location.href = ssoUrl;
-}
+  if (ssoResult === 'success') {
+    showStatus('✅ SSO 完成，正在載入用友雲...', 'success');
+    setTimeout(showApp, 1000);
+  } else {
+    // Just show home panel, init Teams
+    initTeams();
+  }
 </script>
 
 </body>
