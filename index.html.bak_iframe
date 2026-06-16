@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+  <title>Yonyou Cloud</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body {
+      width: 100%; height: 100%; overflow: auto;
+      background: #fff; font-family: "Segoe UI", sans-serif;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    #lang-bar {
+      position: fixed; top: 0; left: 0; width: 100%;
+      background: #fff; border-bottom: 1px solid #dee2e6;
+      display: flex; align-items: center; justify-content: center;
+      padding: 4px 8px; z-index: 8;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      flex-wrap: wrap;
+    }
+    .lang-btn {
+      padding: 2px 8px; margin: 0 3px; border: 1px solid #adb5bd;
+      border-radius: 3px; background: #fff; color: #495057;
+      font-size: 10px; cursor: pointer; transition: all 0.2s;
+      text-decoration: none; display: inline-block;
+    }
+    .lang-btn:hover, .lang-btn.active {
+      background: #E8450F; color: #fff; border-color: #E8450F;
+    }
+    .lang-label { color: #868e96; font-size: 10px; margin-right: 4px; }
+
+    #loading {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      background: linear-gradient(135deg, #f8f9fa, #e9ecef); z-index: 10;
+      transition: opacity 0.5s ease;
+    }
+    #loading.fade-out { opacity: 0; pointer-events: none; }
+    .spinner {
+      width: 44px; height: 44px; border: 4px solid #dee2e6;
+      border-top-color: #E8450F; border-radius: 50%;
+      animation: spin 0.8s linear infinite; margin-bottom: 20px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading-text { color: #495057; font-size: 15px; font-weight: 500; }
+    .loading-sub { color: #868e96; font-size: 12px; margin-top: 6px; }
+
+    /* SSO 登入面板 */
+    #login-panel {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      height: calc(100% - 28px);
+      margin-top: 28px;
+      background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+      padding: 20px;
+    }
+    .login-card {
+      background: #fff; border-radius: 10px; padding: 32px 36px;
+      max-width: 380px; width: 100%;
+      box-shadow: 0 2px 16px rgba(0,0,0,0.1);
+      text-align: center;
+    }
+    .login-logo {
+      width: 56px; height: 56px; margin: 0 auto 16px;
+      background: #E8450F; border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .login-logo svg { width: 32px; height: 32px; fill: #fff; }
+    .login-card h2 { color: #E8450F; font-size: 22px; margin-bottom: 6px; }
+    .login-card .sub { color: #868e96; font-size: 12px; margin-bottom: 24px; }
+    .login-card .desc { color: #495057; font-size: 13px; margin-bottom: 24px; line-height: 1.6; }
+
+    .ms-btn {
+      display: flex; align-items: center; justify-content: center;
+      width: 100%; padding: 12px 20px;
+      background: #E8450F; color: #fff; border: none;
+      border-radius: 4px; font-size: 14px; font-weight: 500;
+      cursor: pointer; margin-bottom: 12px;
+      transition: background 0.2s;
+    }
+    .ms-btn:hover { background: #d13e0c; }
+    .ms-btn svg { width: 18px; height: 18px; margin-right: 8px; fill: #fff; }
+
+    .ms-btn.secondary {
+      background: #fff; color: #495057; border: 1px solid #dee2e6;
+    }
+    .ms-btn.secondary:hover { background: #f8f9fa; }
+
+    .login-note {
+      color: #adb5bd; font-size: 11px; margin-top: 16px;
+      line-height: 1.5;
+    }
+    .login-note strong { color: #868e96; }
+
+    /* iframe 容器 */
+    #frame-container {
+      width: 100%;
+      height: calc(100% - 28px);
+      overflow-x: auto;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      margin-top: 28px;
+    }
+    iframe {
+      border: none; display: block;
+    }
+    iframe.mobile-fit {
+      width: 100%;
+      height: 100%;
+      min-height: calc(100vh - 28px);
+    }
+    iframe.desktop-mode {
+      width: 1440px;
+      height: 900px;
+    }
+
+    #mobile-hint {
+      display: none;
+      position: fixed;
+      bottom: 10px; left: 50%; transform: translateX(-50%);
+      background: rgba(232,69,15,0.9); color: #fff;
+      padding: 6px 14px; border-radius: 20px;
+      font-size: 11px; z-index: 5;
+      pointer-events: none; white-space: nowrap;
+    }
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+  <div id="lang-bar">
+    <span class="lang-label">語言：</span>
+    <a class="lang-btn" id="btn-en" href="#" onclick="switchLang('en')">EN</a>
+    <a class="lang-btn" id="btn-tw" href="#" onclick="switchLang('tw')">繁體</a>
+    <a class="lang-btn active" id="btn-cn" href="#" onclick="switchLang('cn')">简体</a>
+  </div>
+
+  <div id="loading">
+    <div class="spinner"></div>
+    <div class="loading-text">正在載入用友雲...</div>
+    <div class="loading-sub">Loading Yonyou Cloud</div>
+  </div>
+
+  <!-- SSO 登入面板 -->
+  <div id="login-panel">
+    <div class="login-card">
+      <div class="login-logo">
+        <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
+      </div>
+      <h2>用友雲 YonSuite</h2>
+      <div class="sub">企業 SSO 單一登入</div>
+      <div class="desc">
+        透過 Microsoft 365 帳戶自動驗證身份，<br>一鍵進入用友雲系統。
+      </div>
+
+      <button class="ms-btn" id="sso-btn" onclick="doSSOLogin()">
+        <svg viewBox="0 0 23 23"><path d="M0 0v23h23V0H0zm12.1 16.6H6L12 5.5l6 11.1zm-1.1-13L5.6 18h3.4l.9-2.2h5l.9 2.2h3.4L12.5 3.6h-.5z"/></svg>
+        使用 M365 帳戶登入
+      </button>
+
+      <button class="ms-btn secondary" onclick="openDirect()">
+        🔗 直接進入（需已登入）
+      </button>
+
+      <div class="login-note">
+        ⚠️ 首次登入需在彈出視窗中完成 Microsoft 身份驗證<br>
+        並綁定用友雲帳戶（只需一次）
+      </div>
+    </div>
+  </div>
+
+  <!-- iframe 容器（已登入後顯示） -->
+  <div id="frame-container" class="hidden">
+    <iframe id="yonyou" src="" allow="clipboard-read; clipboard-write"></iframe>
+  </div>
+
+  <div id="mobile-hint">👆 可滑動查看更多內容</div>
+
+  <script>
+    // =============================================
+    // SSO 配置（來自用友雲 Azure AD 整合）
+    // =============================================
+    var SSO_SERVICE = encodeURIComponent('https://c2.yonyoucloud.com/login?tenantId=w5f0xnbi');
+    var SSO_URL = 'https://euc.yonyoucloud.com/cas/thirdSaml2Login?thirdUCId=u10pzze8&service=' + SSO_SERVICE;
+
+    var YONYOU_HOME = 'https://c2.yonyoucloud.com/';
+
+    var currentLang = 'cn';
+    var frame = document.getElementById('yonyou');
+    var loading = document.getElementById('loading');
+    var loginPanel = document.getElementById('login-panel');
+    var frameContainer = document.getElementById('frame-container');
+    var isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+
+    // =============================================
+    // SSO 登入：使用 Teams Deep Link
+    // =============================================
+    function doSSOLogin() {
+      var btn = document.getElementById('sso-btn');
+      btn.disabled = true;
+      btn.textContent = '正在打開登入頁...';
+
+      try {
+        if (typeof microsoftTeams !== 'undefined') {
+          // 方法 1：Teams Deep Link（在 Teams 客戶端內打開瀏覽器）
+          var deepLink = 'https://teams.microsoft.com/l/auth-callback?appId=&redirect=' + encodeURIComponent(SSO_URL);
+          microsoftTeams.executeDeepLink(deepLink);
+        } else {
+          // 方法 2：直接跳轉（非 Teams 環境）
+          window.open(SSO_URL, '_blank');
+        }
+      } catch(e) {
+        // 方法 3：備用直接開窗
+        window.open(SSO_URL, '_blank');
+      }
+
+      btn.disabled = false;
+      btn.textContent = '使用 M365 帳戶登入';
+    }
+
+    // =============================================
+    // 直接進入（已登入的情況）
+    // =============================================
+    function openDirect() {
+      loginPanel.classList.add('hidden');
+      frameContainer.classList.remove('hidden');
+      frame.src = YONYOU_HOME;
+
+      if (isMobile) {
+        frame.classList.add('mobile-fit');
+      } else {
+        frame.classList.add('desktop-mode');
+      }
+    }
+
+    // =============================================
+    // 嘗試自動進入（檢測是否已有 session）
+    // =============================================
+    function tryAutoEnter() {
+      loginPanel.classList.add('hidden');
+      frameContainer.classList.remove('hidden');
+      frame.src = YONYOU_HOME;
+
+      // 5 秒後如果還在登入頁，說明沒有 session，切回登入面板
+      setTimeout(function() {
+        try {
+          var currentSrc = frame.src;
+          if (currentSrc && currentSrc.includes('ssologin')) {
+            showLoginPanel();
+          }
+        } catch(e) {}
+      }, 5000);
+
+      if (isMobile) {
+        frame.classList.add('mobile-fit');
+      } else {
+        frame.classList.add('desktop-mode');
+      }
+    }
+
+    function showLoginPanel() {
+      loginPanel.classList.remove('hidden');
+      frameContainer.classList.add('hidden');
+      frame.src = '';
+    }
+
+    function switchLang(lang) {
+      currentLang = lang;
+      document.querySelectorAll('.lang-btn').forEach(function(btn) { btn.classList.remove('active'); });
+      document.getElementById('btn-' + lang).classList.add('active');
+      return false;
+    }
+
+    frame.addEventListener('load', function() {
+      setTimeout(function() {
+        loading.classList.add('fade-out');
+        setTimeout(function() { loading.style.display = 'none'; }, 500);
+      }, 800);
+    });
+
+    // =============================================
+    // Teams SDK 初始化
+    // =============================================
+    (function initTeams() {
+      try {
+        if (typeof microsoftTeams !== 'undefined') {
+          microsoftTeams.initialize(function() {
+            console.log('Teams initialized');
+
+            // 通知 Teams：我們準備好了
+            microsoftTeams.appInitialization.notifySuccess();
+
+            // 設置有效性
+            microsoftTeams.settings.setValidityState(true);
+
+            // 主題變化
+            microsoftTeams.registerOnThemeChangeHandler(function(theme) {
+              document.body.style.backgroundColor = theme === 'dark' ? '#1f1f1f' : '#fff';
+            });
+
+            // 監聽回調（從外部瀏覽器回來時觸發）
+            microsoftTeams.registerOnThemeChangeHandler(function(theme) {
+              // 刷新 iframe
+              frame.src = '';
+              setTimeout(function() { frame.src = YONYOU_HOME; }, 300);
+            });
+
+            // 頁面就緒後自動嘗試進入
+            setTimeout(function() {
+              loginPanel.classList.remove('hidden');
+              loading.classList.add('fade-out');
+              setTimeout(function() { loading.style.display = 'none'; }, 500);
+            }, 1500);
+          });
+        } else {
+          // 非 Teams 環境
+          setTimeout(function() {
+            loginPanel.classList.remove('hidden');
+            loading.classList.add('fade-out');
+            setTimeout(function() { loading.style.display = 'none'; }, 500);
+          }, 2000);
+        }
+      } catch(e) {
+        console.log('Init error:', e.message);
+        setTimeout(function() {
+          loginPanel.classList.remove('hidden');
+          loading.classList.add('fade-out');
+          setTimeout(function() { loading.style.display = 'none'; }, 500);
+        }, 2000);
+      }
+    })();
+
+    if (isMobile) {
+      var mobileHint = document.getElementById('mobile-hint');
+      mobileHint.style.display = 'block';
+      setTimeout(function() {
+        mobileHint.style.opacity = '0';
+        mobileHint.style.transition = 'opacity 0.5s';
+        setTimeout(function() { mobileHint.style.display = 'none'; }, 500);
+      }, 4000);
+    }
+  </script>
+
+  <script src="https://res.cdn.office.net/teams-js/2.0.0/js/MicrosoftTeams.min.js"></script>
+</body>
+</html>

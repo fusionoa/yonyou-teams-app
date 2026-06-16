@@ -1,0 +1,8 @@
+<?xml version="1.0"?>
+<md:EntityDescriptor xmlns:md="urn:oasis:names:tc:SAML:2.0:metadata" validUntil="2029-06-15T14:31:47.546550107Z" cacheDuration="PT604800S" entityID="https://euc.yonyoucloud.com/cas">
+<md:SPSSODescriptor AuthnRequestsSigned="false" WantAssertionsSigned="false" protocolSupportEnumeration="urn:oasis:names:tc:SAML:2.0:protocol">
+<md:SingleLogoutService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect" Location="https://euc.yonyoucloud.com/cas/logout"/>
+<md:NameIDFormat>urn:oasis:names:tc:SAML:2.0:nameid-format:persistent</md:NameIDFormat>
+<md:AssertionConsumerService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST" Location="https://euc.yonyoucloud.com/cas/thirdSamlLoginByPost?thirdUCId=u10pzze8" index="1"/>
+</md:SPSSODescriptor>
+</md:EntityDescriptor>

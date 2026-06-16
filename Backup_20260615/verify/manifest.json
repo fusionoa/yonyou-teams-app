@@ -1,0 +1,41 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/teams/v1.28/MicrosoftTeams.schema.json",
+  "manifestVersion": "1.28",
+  "version": "1.0.0",
+  "id": "${TEAMS_APP_ID}",
+  "packageName": "com.yonyou.teams.tab",
+  "developer": {
+    "name": "Your Company",
+    "websiteUrl": "https://c2.yonyoucloud.com/",
+    "privacyUrl": "https://c2.yonyoucloud.com/",
+    "termsOfUseUrl": "https://c2.yonyoucloud.com/"
+  },
+  "icons": {
+    "color": "color.png",
+    "outline": "outline.png"
+  },
+  "name": {
+    "short": "用友雲",
+    "full": "用友雲 Yonyou Cloud"
+  },
+  "description": {
+    "short": "用友雲進銷存系統",
+    "full": "在 Microsoft Teams 中直接使用用友雲進銷存管理系統，無需切換視窗。"
+  },
+  "accentColor": "#E8450F",
+  "staticTabs": [
+    {
+      "entityId": "yonyou-tab",
+      "name": "用友雲",
+      "contentUrl": "https://fusionoa.github.io/yonyou-teams-app/",
+      "websiteUrl": "https://c2.yonyoucloud.com/",
+      "scopes": ["personal"]
+    }
+  ],
+  "permissions": ["identity", "messageTeamMembers"],
+  "validDomains": [
+    "c2.yonyoucloud.com",
+    "*.yonyoucloud.com",
+    "*.yonyou.com"
+  ]
+}

@@ -24,88 +24,96 @@
       margin-bottom: 20px;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
-    .msg { font-size: 15px; color: #6b7280; }
+    .msg { font-size: 15px; color: #6b7280; max-width: 300px; text-align: center; line-height: 1.5; }
+    .success { color: #16a34a; }
+    .error { color: #dc2626; }
   </style>
 </head>
 <body>
-  <div class="spinner"></div>
-  <p class="msg" id="msg">正在完成 SSO 登入...</p>
+  <div class="spinner" id="spinner"></div>
+  <p class="msg" id="msg">正在處理登入...</p>
 
   <script>
     async function handleCallback() {
       const params = new URLSearchParams(window.location.search);
+      const hash = window.location.hash; // AngularJS hash route
+      const msgEl = document.getElementById('msg');
+      const spinnerEl = document.getElementById('spinner');
+
+      // Check for various success indicators from YonSuite SSO
       const error = params.get('error');
-      const yonyouSid = params.get('yonyou_sid'); // Our custom param if YonSuite sets it
+      const token = params.get('token') || params.get('access_token') || params.get('sid');
+      const code = params.get('code');
+      const ticket = params.get('ticket');
 
-      // Check if we're still on the SSO flow (has SAMLResponse or RelayState)
-      const hasSAMLResponse = params.has('SAMLResponse') || 
-        window.location.href.includes('SAMLResponse');
+      // Check hash for AngularJS route state (e.g. #/home, #/dashboard)
+      const isHomeRoute = hash.includes('/home') || hash.includes('/dashboard') || 
+                          hash.includes('/main') || hash === '' && params.toString() === '';
 
+      // If redirected back from YonSuite after login, we might be on the login page with a session
+      // Check if we're successfully logged in (YonSuite sets cookies)
       if (error) {
-        document.getElementById('msg').textContent = '登入失敗：' + decodeURIComponent(error);
+        msgEl.textContent = '❌ 登入失敗：' + decodeURIComponent(error);
+        msgEl.className = 'msg error';
+        spinnerEl.style.display = 'none';
         await notifyFailure('SSO error: ' + error);
         return;
       }
 
-      if (hasSAMLResponse) {
-        // We're at the SAML POST page - form should auto-submit
-        // Wait for the form to submit and come back to our callback URL
-        document.getElementById('msg').textContent = '正在完成驗證...';
-        
-        // Intercept the form submission to add our callback param
-        const form = document.querySelector('form');
-        if (form) {
-          // Add RelayState to point back to our callback
-          const relayInput = form.querySelector('input[name="RelayState"]');
-          if (relayInput && !relayInput.value.includes('sso-callback')) {
-            relayInput.value = window.location.origin + '/teams/sso-callback.html?sso=success';
-          }
-          // Let the form submit naturally
-          document.getElementById('msg').textContent = '正在完成驗證，請稍候...';
-        }
-        return;
-      }
-
-      // Check if URL indicates successful SAML flow returned
-      const urlParams = new URLSearchParams(window.location.search);
-      const relayState = urlParams.get('RelayState') || '';
-      const ticket = urlParams.get('ticket') || '';
-
-      // If we have a ticket, the SAML flow succeeded
-      if (ticket || relayState.includes('sso-success') || urlParams.get('sso') === 'success') {
+      // Check if URL indicates we're still on YonSuite SPA (has hash route)
+      if (hash && hash !== '' && !hash.includes('ssologin')) {
+        // We're on an app route - SSO likely succeeded!
+        spinnerEl.style.display = 'none';
+        msgEl.innerHTML = '✅ 登入成功！<br><br>正在關閉視窗...';
+        msgEl.className = 'msg success';
         await notifySuccess();
         return;
       }
 
-      // Still on the SSO login page - wait for user interaction
-      document.getElementById('msg').textContent = '請在彈窗中完成登入...';
+      // Check for token/code/ticket in URL
+      if (token || code || ticket) {
+        spinnerEl.style.display = 'none';
+        msgEl.innerHTML = '✅ 驗證完成！<br><br>正在關閉視窗...';
+        msgEl.className = 'msg success';
+        await notifySuccess();
+        return;
+      }
 
-      // Set up a MutationObserver to detect when the form submits
-      // (SAML form auto-submits after Microsoft login)
-      const observer = new MutationObserver(() => {
-        if (document.querySelector('form') === null || 
-            window.location.search.includes('SAMLResponse')) {
-          // Form submitted, reload to process
-          window.location.reload();
-        }
-      });
+      // Still on login page - wait for user to interact
+      spinnerEl.style.display = 'none';
+      msgEl.innerHTML = '請在視窗中完成登入...<br><br><span style="font-size:12px;color:#9ca3af;">如果已填寫資訊，請點擊「確定」</span>';
       
-      observer.observe(document.body, { childList: true, subtree: true });
+      // Set up interval to check for URL/hash changes
+      const originalHash = window.location.hash;
+      const originalHref = window.location.href;
+      let countdown = 60;
+      const countdownEl = document.createElement('p');
+      countdownEl.style.cssText = 'font-size:12px;color:#9ca3af;margin-top:16px;';
+      msgEl.after(countdownEl);
 
-      // Also check for page changes every second
-      let lastHref = window.location.href;
       const interval = setInterval(() => {
-        if (window.location.href !== lastHref) {
+        countdown--;
+        countdownEl.textContent = `等待中... (${countdown}s)`;
+        
+        if (window.location.href !== originalHref || window.location.hash !== originalHash) {
           clearInterval(interval);
           handleCallback();
+        }
+        if (countdown <= 0) {
+          clearInterval(interval);
+          // Timeout - assume success if we're not on login page
+          if (window.location.hash.includes('/home') || window.location.hash.includes('/dashboard')) {
+            notifySuccess();
+          } else {
+            msgEl.textContent = '等待超時，請重試';
+            msgEl.className = 'msg error';
+            notifyFailure('timeout');
+          }
         }
       }, 1000);
     }
 
     async function notifySuccess() {
-      document.getElementById('msg').textContent = '✅ 登入成功！正在關閉視窗...';
-      document.body.innerHTML += '<p style="color:#16a34a;margin-top:16px;font-size:14px;">✓ 成功</p>';
-      
       try {
         await microsoftTeams.app.initialize();
         microsoftTeams.authentication.notifySuccess('sso_complete');
@@ -118,20 +126,30 @@
     }
 
     async function notifyFailure(reason) {
-      document.getElementById('msg').textContent = '❌ ' + (reason || '登入失敗');
-      
       try {
         await microsoftTeams.app.initialize();
         microsoftTeams.authentication.notifyFailure(reason || 'unknown_error');
       } catch(e) {
-        // Not in Teams - redirect to main page
         setTimeout(() => {
           window.location.href = window.location.origin + '/teams/?error=' + encodeURIComponent(reason);
         }, 2000);
       }
     }
 
-    // Initialize
+    // Add a manual "Done" button in case auto-detection fails
+    document.body.innerHTML += `
+      <button onclick="handleCallback()" style="
+        margin-top: 24px;
+        padding: 8px 24px;
+        background: #0078d4;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 14px;
+      ">已完成登入，點擊這裡</button>
+    `;
+
     handleCallback();
   </script>
 </body>
